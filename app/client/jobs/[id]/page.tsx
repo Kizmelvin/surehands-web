@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { JOBS, WORKERS, formatNaira, timeAgo, transportSurcharge } from "@/lib/fixtures";
+import { JOBS, WORKERS, formatNaira, timeAgo } from "@/lib/fixtures";
 import { Avatar } from "@/components/avatar";
 
 export default function ClientJobDetailPage({ params }: { params: { id: string } }) {
@@ -47,7 +47,6 @@ export default function ClientJobDetailPage({ params }: { params: { id: string }
 
             <ul className="mt-4 space-y-3">
               {proposals.map(({ worker, quoted, message }) => {
-                const surcharge = transportSurcharge(worker.distance_km);
                 return (
                   <li key={worker.user_id} className="card">
                     <div className="flex items-start gap-4">
@@ -63,7 +62,7 @@ export default function ClientJobDetailPage({ params }: { params: { id: string }
                           <span className="text-lg font-bold text-gray-900">{formatNaira(quoted)}</span>
                         </div>
                         <p className="text-xs text-gray-600">
-                          ★ {worker.rating.toFixed(1)} · {worker.jobs_completed} jobs · {worker.distance_km.toFixed(1)} km away · +{formatNaira(surcharge)} transport
+                          ★ {worker.rating.toFixed(1)} · {worker.jobs_completed} jobs · {worker.distance_km.toFixed(1)} km away
                         </p>
                         <p className="mt-2 text-sm text-gray-700">{message}</p>
                         <div className="mt-3 flex gap-2">

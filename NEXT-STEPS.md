@@ -27,7 +27,7 @@
 ### Geospatial / matching
 - **Mapbox map view** on `/client/workers` — pins per worker, draggable client pin, radius circle that updates results live.
 - **Map picker** for job location in `/client/post-job` and worker base location in `/account`.
-- **Distance matrix API** — replace fixture `distance_km` with live Mapbox Directions/Matrix calls so transport surcharge is honest.
+- **Distance matrix API** — replace fixture `distance_km` with live Mapbox Directions/Matrix calls so the distance shown to clients/workers is accurate.
 - **`search_workers_within_radius` Postgres RPC** — `ST_DWithin` query against `workers.base_location` with category + availability filters; called from the workers page.
 
 ### Booking lifecycle
@@ -38,7 +38,7 @@
 ### Payments
 - **Paystack escrow + commission** — Phase 2 of the PRD. Webhook handler at `/api/webhooks/paystack` that records subscriptions and job payments. Commission split server-side.
 - **Worker subscription billing** — current `subscriptions` table already exists; wire the Paystack checkout for monthly/yearly plans.
-- **Transport surcharge as a separate line item** on every invoice.
+- **Worker payout policy** documented and surfaced in `/account`: workers see exactly what % the platform retains and when funds arrive.
 
 ### Communication
 - **In-app messaging** — Supabase Realtime channel per booking, simple thread UI.

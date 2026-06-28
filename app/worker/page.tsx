@@ -14,17 +14,17 @@ export default function WorkerHomePage() {
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-10 md:px-8">
-      <div className="rounded-3xl bg-gradient-to-br from-brand-700 to-brand-900 p-8 text-white shadow-soft">
+      <div className="rounded-2xl bg-gradient-to-br from-brand-700 to-brand-900 p-6 text-white shadow-soft sm:rounded-3xl sm:p-8">
         <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
           <div>
             <p className="text-brand-100">Worker portal</p>
-            <h1 className="mt-2 text-3xl font-bold md:text-4xl">Good morning, Chibuzo 👋</h1>
-            <p className="mt-2 max-w-xl text-brand-100">
+            <h1 className="mt-2 text-2xl font-bold sm:text-3xl md:text-4xl">Good morning, Chibuzo 👋</h1>
+            <p className="mt-2 max-w-xl text-sm text-brand-100 sm:text-base">
               You have 12 nearby jobs in your category. Turn yourself on to start receiving requests.
             </p>
           </div>
 
-          <div className="flex items-center gap-4 rounded-2xl bg-white/10 p-4 backdrop-blur">
+          <div className="flex items-center justify-between gap-4 rounded-2xl bg-white/10 p-4 backdrop-blur sm:justify-start">
             <div>
               <p className="text-xs uppercase tracking-wide text-brand-100">Status</p>
               <p className="text-lg font-bold">{available ? "Available now" : "Offline"}</p>

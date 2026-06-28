@@ -10,7 +10,7 @@ Next.js (App Router) + TypeScript + Tailwind web companion to the [Sure Hands mo
 | Client home | `/client` | Dashboard with categories and available workers. |
 | Post a job | `/client/post-job` | Title, description, category, neighbourhood, budget, urgency. |
 | Browse workers | `/client/workers` | Filterable list: category, radius (1–5 km), availability, NIN-verified. |
-| Worker profile | `/client/workers/[id]` | Bio, skills, skill video, reviews, hourly + transport pricing. |
+| Worker profile | `/client/workers/[id]` | Bio, skills, skill video, reviews, hourly pricing. |
 | Job detail (client view) | `/client/jobs/[id]` | Posted job + proposals + lifecycle tracker. |
 | Worker home | `/worker` | Availability toggle, weekly earnings, nearby jobs. |
 | Worker profile editor | `/worker/profile` | KYC checklist (NIN, video), basic details, availability. |

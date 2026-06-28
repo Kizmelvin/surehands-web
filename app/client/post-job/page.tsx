@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CATEGORIES, ENUGU_NEIGHBOURHOODS, formatNaira, transportSurcharge } from "@/lib/fixtures";
+import { CATEGORIES, ENUGU_NEIGHBOURHOODS } from "@/lib/fixtures";
 
 export default function PostJobPage() {
   const [title, setTitle] = useState("");
@@ -11,8 +11,6 @@ export default function PostJobPage() {
   const [budget, setBudget] = useState<number>(15000);
   const [urgency, setUrgency] = useState<"asap" | "today" | "this_week">("today");
   const [submitted, setSubmitted] = useState(false);
-
-  const estimatedSurcharge = transportSurcharge(2.5);
 
   if (submitted) {
     return (
@@ -165,14 +163,10 @@ export default function PostJobPage() {
           </div>
 
           <div className="card">
-            <h2 className="text-sm font-semibold text-gray-900">Pricing transparency</h2>
+            <h2 className="text-sm font-semibold text-gray-900">No travel surcharges</h2>
             <p className="mt-2 text-xs text-gray-600">
-              Workers in our network charge their hourly rate <em>plus</em> a transport surcharge based on
-              distance. For a 2.5 km trip the surcharge is roughly:
-            </p>
-            <p className="mt-2 text-2xl font-bold text-gray-900">{formatNaira(estimatedSurcharge)}</p>
-            <p className="text-xs text-gray-500">
-              Surcharge = distance × per-km rate × region multiplier.
+              We only show your job to workers inside our matching radius (typically 1–5 km). What a worker
+              quotes is what you pay — no surprise distance fees.
             </p>
           </div>
         </aside>

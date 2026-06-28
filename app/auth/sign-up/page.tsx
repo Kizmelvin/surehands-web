@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { PhotoUploader } from "@/components/photo-uploader";
+import { PasswordInput } from "@/components/password-input";
 
 type Role = "client" | "worker";
 
@@ -112,18 +113,24 @@ function SignUpInner() {
         <div>
           <label className="label">I am a…</label>
           <div className="grid grid-cols-2 gap-2">
-            {(["client", "worker"] as const).map((r) => (
+            {(
+              [
+                { v: "client", title: "Client", sub: "I need help" },
+                { v: "worker", title: "Worker", sub: "I do the work" },
+              ] as const
+            ).map((r) => (
               <button
-                key={r}
+                key={r.v}
                 type="button"
-                onClick={() => setRole(r)}
-                className={`rounded-xl border px-4 py-3 text-sm font-semibold transition ${
-                  role === r
+                onClick={() => setRole(r.v)}
+                className={`rounded-xl border px-3 py-3 text-left transition ${
+                  role === r.v
                     ? "border-brand-600 bg-brand-50 text-brand-700"
                     : "border-gray-300 bg-white text-gray-700 hover:border-gray-400"
                 }`}
               >
-                {r === "client" ? "Client — I need help" : "Worker — I do the work"}
+                <span className="block text-sm font-semibold">{r.title}</span>
+                <span className="block text-xs opacity-80">{r.sub}</span>
               </button>
             ))}
           </div>
@@ -146,45 +153,43 @@ function SignUpInner() {
           />
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div>
-            <label className="label" htmlFor="email">Email</label>
-            <input
-              id="email"
-              type="email"
-              required
-              className="input"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
-            />
-          </div>
-          <div>
-            <label className="label" htmlFor="phone">Phone (optional)</label>
-            <input
-              id="phone"
-              type="tel"
-              className="input"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              placeholder="+234 803 ..."
-            />
-          </div>
+        <div>
+          <label className="label" htmlFor="email">Email</label>
+          <input
+            id="email"
+            type="email"
+            required
+            className="input"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="you@example.com"
+            autoComplete="email"
+          />
         </div>
 
         <div>
-          <label className="label" htmlFor="password">Password</label>
+          <label className="label" htmlFor="phone">Phone (optional)</label>
           <input
-            id="password"
-            type="password"
-            required
-            minLength={6}
+            id="phone"
+            type="tel"
             className="input"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="At least 6 characters"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            placeholder="+234 803 ..."
+            autoComplete="tel"
           />
         </div>
+
+        <PasswordInput
+          id="password"
+          label="Password"
+          value={password}
+          onChange={setPassword}
+          required
+          minLength={6}
+          placeholder="At least 6 characters"
+          autoComplete="new-password"
+        />
 
         {error && (
           <div className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">

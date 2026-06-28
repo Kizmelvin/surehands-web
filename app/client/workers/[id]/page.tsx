@@ -1,12 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { WORKERS, formatNaira, transportSurcharge } from "@/lib/fixtures";
+import { WORKERS, formatNaira } from "@/lib/fixtures";
 import { Avatar } from "@/components/avatar";
 
 export default function WorkerDetailPage({ params }: { params: { id: string } }) {
   const worker = WORKERS.find((w) => w.user_id === params.id);
   if (!worker) notFound();
-  const surcharge = transportSurcharge(worker.distance_km);
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-10 md:px-8">
@@ -119,7 +118,7 @@ export default function WorkerDetailPage({ params }: { params: { id: string } })
           <div className="card sticky top-20">
             <p className="text-sm text-gray-500">Hourly rate</p>
             <p className="mt-1 text-3xl font-bold text-gray-900">{formatNaira(worker.hourly_rate)}</p>
-            <p className="text-xs text-gray-500">excludes transport</p>
+            <p className="text-xs text-gray-500">no travel fees added</p>
 
             <hr className="my-4 border-gray-100" />
 
@@ -129,16 +128,13 @@ export default function WorkerDetailPage({ params }: { params: { id: string } })
                 <dd className="font-medium text-gray-900">{worker.distance_km.toFixed(1)} km</dd>
               </div>
               <div className="flex justify-between">
-                <dt className="text-gray-600">Transport surcharge</dt>
-                <dd className="font-medium text-gray-900">{formatNaira(surcharge)}</dd>
-              </div>
-              <div className="flex justify-between">
-                <dt className="text-gray-600">First-hour total</dt>
-                <dd className="font-bold text-gray-900">
-                  {formatNaira(worker.hourly_rate + surcharge)}
-                </dd>
+                <dt className="text-gray-600">First-hour estimate</dt>
+                <dd className="font-bold text-gray-900">{formatNaira(worker.hourly_rate)}</dd>
               </div>
             </dl>
+            <p className="mt-2 text-xs text-gray-500">
+              Worker is within Sure Hands&apos; matching radius — no extra travel cost.
+            </p>
 
             <div className="mt-5 space-y-2">
               <Link href="/client/post-job" className="btn-primary w-full">Hire {worker.full_name.split(" ")[0]}</Link>
