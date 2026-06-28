@@ -6,13 +6,13 @@ export default function HomePage() {
   return (
     <div>
       <section className="relative overflow-hidden bg-gradient-to-br from-brand-50 via-white to-stone-50">
-        <div className="mx-auto grid max-w-7xl gap-12 px-4 py-16 md:grid-cols-2 md:px-8 md:py-24">
+        <div className="mx-auto grid max-w-7xl gap-10 px-4 py-12 md:grid-cols-2 md:gap-12 md:px-8 md:py-24">
           <div className="flex flex-col justify-center">
             <span className="chip-brand w-fit">Launching in Enugu · Now in beta</span>
-            <h1 className="mt-4 text-4xl font-bold tracking-tight text-gray-900 md:text-5xl">
+            <h1 className="mt-4 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl md:text-5xl">
               Verified hands. <span className="text-brand-600">Nearby.</span> Now.
             </h1>
-            <p className="mt-5 max-w-xl text-lg text-gray-600">
+            <p className="mt-5 max-w-xl text-base text-gray-600 sm:text-lg">
               Sure Hands connects you to NIN-verified plumbers, electricians, cleaners, and mechanics within a
               1–5 km radius. Transparent transport fees. No more wasted hours hunting for a trusted artisan.
             </p>

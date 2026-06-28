@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { PasswordInput } from "@/components/password-input";
 
 export default function SignInPage() {
   return (
@@ -72,19 +73,15 @@ function SignInInner() {
           />
         </div>
 
-        <div>
-          <label className="label" htmlFor="password">Password</label>
-          <input
-            id="password"
-            type="password"
-            required
-            className="input"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="••••••••"
-            autoComplete="current-password"
-          />
-        </div>
+        <PasswordInput
+          id="password"
+          label="Password"
+          value={password}
+          onChange={setPassword}
+          required
+          placeholder="••••••••"
+          autoComplete="current-password"
+        />
 
         {error && (
           <div className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">
