@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { notFound, useParams } from "next/navigation";
 import { useState } from "react";
-import { JOBS, formatNaira, timeAgo, transportSurcharge } from "@/lib/fixtures";
+import { JOBS, formatNaira, timeAgo } from "@/lib/fixtures";
 
 export default function WorkerJobDetailPage() {
   const params = useParams<{ id: string }>();
@@ -15,8 +15,6 @@ export default function WorkerJobDetailPage() {
     "I can be there in under an hour with all tools. Quoting fairly based on what you described."
   );
   const [submitted, setSubmitted] = useState(false);
-
-  const surcharge = transportSurcharge(job.distance_km);
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-10 md:px-8">
@@ -47,8 +45,8 @@ export default function WorkerJobDetailPage() {
               <p className="text-lg font-bold text-gray-900">{formatNaira(job.budget)}</p>
             </div>
             <div className="rounded-xl border border-gray-100 p-3">
-              <p className="text-xs text-gray-500">Transport surcharge</p>
-              <p className="text-lg font-bold text-gray-900">+{formatNaira(surcharge)}</p>
+              <p className="text-xs text-gray-500">Distance from you</p>
+              <p className="text-lg font-bold text-gray-900">{job.distance_km.toFixed(1)} km</p>
             </div>
             <div className="rounded-xl border border-gray-100 p-3">
               <p className="text-xs text-gray-500">Open proposals</p>
@@ -77,7 +75,10 @@ export default function WorkerJobDetailPage() {
               }}
             >
               <h2 className="text-base font-semibold text-gray-900">Submit a proposal</h2>
-              <p className="text-sm text-gray-600">Quote includes labor only. Transport is added separately.</p>
+              <p className="text-sm text-gray-600">
+                Quote the full price you&apos;ll charge for the job. Only apply to jobs close enough that travel
+                isn&apos;t a hassle.
+              </p>
 
               <div className="mt-4 grid gap-4 sm:grid-cols-2">
                 <div>
@@ -126,18 +127,16 @@ export default function WorkerJobDetailPage() {
             <dl className="mt-3 space-y-2 text-sm">
               <div className="flex justify-between">
                 <dt className="text-gray-600">Your quote</dt>
-                <dd className="font-medium text-gray-900">{formatNaira(quote)}</dd>
+                <dd className="font-bold text-gray-900">{formatNaira(quote)}</dd>
               </div>
-              <div className="flex justify-between">
-                <dt className="text-gray-600">Transport ({job.distance_km.toFixed(1)} km)</dt>
-                <dd className="font-medium text-gray-900">{formatNaira(surcharge)}</dd>
-              </div>
-              <hr className="border-gray-100" />
-              <div className="flex justify-between">
-                <dt className="font-semibold text-gray-900">Total</dt>
-                <dd className="font-bold text-gray-900">{formatNaira(quote + surcharge)}</dd>
+              <div className="flex justify-between text-xs text-gray-500">
+                <dt>Distance from you</dt>
+                <dd>{job.distance_km.toFixed(1)} km</dd>
               </div>
             </dl>
+            <p className="mt-3 text-xs text-gray-500">
+              No transport surcharge — Sure Hands only shows you jobs within your travel radius.
+            </p>
           </div>
 
           <div className="card">

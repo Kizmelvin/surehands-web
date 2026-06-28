@@ -188,10 +188,6 @@ export const JOBS: JobCard[] = [
   },
 ];
 
-export function transportSurcharge(distanceKm: number, baseRatePerKm = 300): number {
-  return Math.round(distanceKm * baseRatePerKm);
-}
-
 export function formatNaira(amount: number): string {
   return new Intl.NumberFormat("en-NG", {
     style: "currency",

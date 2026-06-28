@@ -1,9 +1,8 @@
 import Link from "next/link";
 import type { JobCard as JobCardType } from "@/types/db";
-import { formatNaira, timeAgo, transportSurcharge } from "@/lib/fixtures";
+import { formatNaira, timeAgo } from "@/lib/fixtures";
 
 export function JobCard({ job, hrefBase = "/worker/jobs" }: { job: JobCardType; hrefBase?: string }) {
-  const surcharge = transportSurcharge(job.distance_km);
   return (
     <Link href={`${hrefBase}/${job.id}`} className="card group block">
       <div className="flex items-start justify-between gap-3">
@@ -37,9 +36,6 @@ export function JobCard({ job, hrefBase = "/worker/jobs" }: { job: JobCardType; 
         </span>
         <span>· {job.distance_km.toFixed(1)} km</span>
         <span>· {job.proposals_count} proposals</span>
-        <span className="ml-auto rounded-md bg-amber-50 px-2 py-0.5 font-medium text-amber-700">
-          +{formatNaira(surcharge)} transport
-        </span>
       </div>
     </Link>
   );

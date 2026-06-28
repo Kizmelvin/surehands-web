@@ -14,7 +14,7 @@ export default function HomePage() {
             </h1>
             <p className="mt-5 max-w-xl text-base text-gray-600 sm:text-lg">
               Sure Hands connects you to NIN-verified plumbers, electricians, cleaners, and mechanics within a
-              1–5 km radius. Transparent transport fees. No more wasted hours hunting for a trusted artisan.
+              1–5 km radius. No travel surcharges. No more wasted hours hunting for a trusted artisan.
             </p>
             <div className="mt-7 flex flex-wrap gap-3">
               <Link href="/client/post-job" className="btn-primary">Post a job →</Link>
@@ -71,7 +71,7 @@ export default function HomePage() {
             {
               n: "2",
               title: "Match & price",
-              body: "Our matching engine surfaces workers in a 1–5 km radius. Transport surcharge is shown up front."
+              body: "Our matching engine only surfaces workers within a 1–5 km radius — the price you see is the price you pay."
             },
             {
               n: "3",
@@ -120,7 +120,7 @@ export default function HomePage() {
                 },
                 {
                   t: "Geofenced operations",
-                  b: "We onboard region by region, so support, SLA timers, and surcharge math are tuned per city."
+                  b: "We onboard region by region, so support, SLA timers, and matching radii are tuned per city."
                 },
               ].map((item) => (
                 <li key={item.t} className="card flex items-start gap-4">

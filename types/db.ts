@@ -14,7 +14,6 @@ export type ServiceCategory = {
 export type OperatingRegion = {
   id: UUID;
   region_name: string;
-  base_transport_surcharge: number;
   sla_timeout_minutes: number;
   max_matching_radius_km: number;
   is_active: boolean;
