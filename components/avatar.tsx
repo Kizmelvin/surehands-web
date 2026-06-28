@@ -33,7 +33,7 @@ export function Avatar({
 
   if (url) {
     return (
-      <div className={`relative overflow-hidden ${sizeCls} ${className}`}>
+      <div className={`relative shrink-0 overflow-hidden ${sizeCls} ${className}`}>
         <Image
           src={url}
           alt={name ? `${name}'s avatar` : "Avatar"}
@@ -48,7 +48,7 @@ export function Avatar({
 
   return (
     <div
-      className={`grid place-items-center bg-brand-100 font-bold text-brand-700 ${sizeCls} ${className}`}
+      className={`grid shrink-0 place-items-center bg-brand-100 font-bold text-brand-700 ${sizeCls} ${className}`}
       aria-label={name ? `${name}'s avatar placeholder` : "Avatar placeholder"}
     >
       {initials(name)}

@@ -16,9 +16,9 @@ export default function WorkerHomePage() {
     <div className="mx-auto max-w-7xl px-4 py-10 md:px-8">
       <div className="rounded-2xl bg-gradient-to-br from-brand-700 to-brand-900 p-6 text-white shadow-soft sm:rounded-3xl sm:p-8">
         <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
-          <div>
+          <div className="min-w-0">
             <p className="text-brand-100">Worker portal</p>
-            <h1 className="mt-2 text-2xl font-bold sm:text-3xl md:text-4xl">Good morning, Chibuzo 👋</h1>
+            <h1 className="mt-2 break-words text-2xl font-bold leading-tight sm:text-3xl md:text-4xl">Good morning, Chibuzo 👋</h1>
             <p className="mt-2 max-w-xl text-sm text-brand-100 sm:text-base">
               You have 12 nearby jobs in your category. Turn yourself on to start receiving requests.
             </p>

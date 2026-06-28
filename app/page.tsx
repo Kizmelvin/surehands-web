@@ -7,9 +7,9 @@ export default function HomePage() {
     <div>
       <section className="relative overflow-hidden bg-gradient-to-br from-brand-50 via-white to-stone-50">
         <div className="mx-auto grid max-w-7xl gap-10 px-4 py-12 md:grid-cols-2 md:gap-12 md:px-8 md:py-24">
-          <div className="flex flex-col justify-center">
+          <div className="flex min-w-0 flex-col justify-center">
             <span className="chip-brand w-fit">Launching in Enugu · Now in beta</span>
-            <h1 className="mt-4 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl md:text-5xl">
+            <h1 className="mt-4 text-[28px] font-bold leading-tight tracking-tight text-gray-900 sm:text-4xl md:text-5xl">
               Verified hands. <span className="text-brand-600">Nearby.</span> Now.
             </h1>
             <p className="mt-5 max-w-xl text-base text-gray-600 sm:text-lg">
@@ -36,13 +36,15 @@ export default function HomePage() {
             </div>
           </div>
 
-          <div className="relative">
-            <div className="absolute -left-6 -top-6 h-32 w-32 rounded-full bg-brand-100 blur-2xl" />
-            <div className="absolute -right-6 -bottom-6 h-40 w-40 rounded-full bg-accent-orange/20 blur-3xl" />
-            <div className="relative rounded-3xl border border-gray-200 bg-white p-5 shadow-soft">
-              <div className="mb-4 flex items-center justify-between">
-                <p className="text-sm font-semibold text-gray-900">Workers near GRA, Enugu</p>
-                <span className="chip">5 km radius</span>
+          <div className="relative isolate min-w-0 overflow-hidden rounded-3xl">
+            <div className="pointer-events-none absolute -left-6 -top-6 h-32 w-32 rounded-full bg-brand-100 blur-2xl" />
+            <div className="pointer-events-none absolute -right-6 -bottom-6 h-40 w-40 rounded-full bg-accent-orange/20 blur-3xl" />
+            <div className="relative rounded-3xl border border-gray-200 bg-white p-4 shadow-soft sm:p-5">
+              <div className="mb-4 flex items-center justify-between gap-2">
+                <p className="min-w-0 truncate text-sm font-semibold text-gray-900">
+                  Workers near GRA, Enugu
+                </p>
+                <span className="chip shrink-0 whitespace-nowrap">5 km radius</span>
               </div>
               <div className="space-y-3">
                 {WORKERS.slice(0, 3).map((w) => (
