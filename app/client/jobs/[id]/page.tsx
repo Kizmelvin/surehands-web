@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { JOBS, WORKERS, formatNaira, timeAgo } from "@/lib/fixtures";
 import { Avatar } from "@/components/avatar";
+import { ClientJobFlow } from "@/components/client-job-flow";
 
 export default function ClientJobDetailPage({ params }: { params: { id: string } }) {
   const job = JOBS.find((j) => j.id === params.id);
@@ -80,26 +81,7 @@ export default function ClientJobDetailPage({ params }: { params: { id: string }
         </div>
 
         <aside className="space-y-4">
-          <div className="card">
-            <h2 className="text-sm font-semibold text-gray-900">Job status</h2>
-            <ol className="mt-3 space-y-2 text-sm">
-              {["Requested", "Accepted", "En route", "In progress", "Completed"].map((s, i) => (
-                <li key={s} className="flex items-center gap-3">
-                  <span
-                    className={`grid h-6 w-6 place-items-center rounded-full text-xs font-bold ${
-                      i === 0 ? "bg-brand-600 text-white" : "bg-gray-200 text-gray-500"
-                    }`}
-                  >
-                    {i + 1}
-                  </span>
-                  <span className={i === 0 ? "font-semibold text-gray-900" : "text-gray-500"}>{s}</span>
-                </li>
-              ))}
-            </ol>
-            <p className="mt-3 text-xs text-gray-500">
-              The booking lifecycle activates once you accept a proposal.
-            </p>
-          </div>
+          <ClientJobFlow workerFullName={proposals[0]?.worker.full_name ?? "the worker"} />
 
           <div className="card">
             <h2 className="text-sm font-semibold text-gray-900">Need to change something?</h2>

@@ -4,7 +4,35 @@
 
 ---
 
-## ✅ Shipping in this pass
+## ✅ Shipped in `feat/admin-media-toggle` (2026-06-29)
+
+- **Admin console at `/admin`** — layout with sidebar nav, gated by `profiles.role = 'admin'`. Pages: Overview (stats), KYC queue (approve/reject verification, batches worker + profile updates), Workers (visibility / availability toggles per row), Bookings (recent + status table). `requireAdmin()` helper (`lib/is-admin.ts`) does the role check. Header now shows an amber "Admin" pill when the signed-in user is an admin.
+- **Photo/video upload on job posting** — new `MediaUploader` component (multi-file, 15 MB cap, images + video, preview + remove). Wired into `/client/post-job`. Adds `jobs.media_urls text[]` column via `migrations/004_job_media.sql`.
+- **Availability toggle wired to Supabase** — worker dashboard reads current `is_available` on mount; toggle updates the DB with optimistic UI, revert on error, "saving…" / "saved · time" indicator, friendly error if no worker row yet.
+
+### To promote your first admin, run this in the Supabase SQL editor:
+
+```sql
+update public.profiles
+set role = 'admin'
+where email = 'you@example.com';
+```
+
+Then sign out + sign back in — the `/admin` link appears in the header.
+
+## ✅ Shipped in `C-DEV` (2026-06-29)
+
+- **Auth flow fixes** — Postgres trigger (`migrations/003_profiles_trigger.sql`) auto-creates `public.profiles` from `auth.users` metadata, so `full_name` / `phone` / `role` from sign-up actually persist (previously dropped silently by RLS). Sign-up now redirects to a dedicated `/auth/check-email` page with a Resend button. Sign-in detects unconfirmed accounts and bounces them back to the explainer. `/account` uses UPSERT (no longer silently no-ops for legacy accounts), locks immutable fields (full_name once set, email, role), and shows a "Complete your profile" banner if `resident_city` is missing. Site header now shows just the avatar (no email text).
+- **Bookings table + lifecycle** — `migrations/001_bookings_and_reviews.sql` adds `booking_status` enum, `bookings` table, `reviews` table, RLS, indexes, and a recency-weighted `worker_review_aggregate` view.
+- **Geospatial RPC** — `migrations/002_search_workers_rpc.sql` adds `search_workers_within_radius(lat, lng, km, category, ...)` using `ST_DWithin`.
+- **`BookingStatusTracker` component** (`components/booking-status-tracker.tsx`) — interactive client-/worker-driven state machine. Wired into both `/client/jobs/[id]` and `/worker/jobs/[id]`.
+- **`ReviewForm` component** — appears after the worker marks a booking complete on the client side.
+- **`searchWorkers()` data layer** (`lib/workers.ts`) — calls the new RPC, gracefully falls back to fixtures when migrations aren't applied. UI shows a Live/Seed badge so the source is always obvious.
+- **Type additions** — `BookingStatus`, `BOOKING_STATUS_ORDER`, `Booking`, `Review` in `types/db.ts`.
+
+> Run `migrations/001_*.sql` then `migrations/002_*.sql` in the Supabase SQL editor when you're ready to switch from seed data to live data.
+
+## ✅ Shipped earlier
 
 - Full email-and-password auth via Supabase Auth (sign-up, sign-in, sign-out, session refresh on every request via middleware).
 - Role selection at sign-up (`client` or `worker`).

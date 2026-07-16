@@ -1,16 +1,83 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { JOBS, formatNaira } from "@/lib/fixtures";
 import { JobCard } from "@/components/job-card";
+import { createClient } from "@/lib/supabase/client";
 
 export default function WorkerHomePage() {
   const [available, setAvailable] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [savedAt, setSavedAt] = useState<Date | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [hasWorkerRow, setHasWorkerRow] = useState<boolean>(false);
   const nearby = JOBS.slice(0, 3);
 
   const earningsThisWeek = 47500;
   const completedThisWeek = 6;
+
+  // Load the current availability from the workers row (if it exists).
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      const supabase = createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data, error: loadErr } = await supabase
+        .from("workers")
+        .select("is_available")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (cancelled) return;
+      if (loadErr) return; // Silent — page still works with local state
+      if (data) {
+        setHasWorkerRow(true);
+        setAvailable(!!data.is_available);
+      }
+    }
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  async function toggle() {
+    setError(null);
+    const next = !available;
+    setAvailable(next); // Optimistic
+    setSaving(true);
+
+    const supabase = createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      setSaving(false);
+      return; // Not signed in — local state only
+    }
+
+    const { error: writeErr } = await supabase
+      .from("workers")
+      .update({ is_available: next })
+      .eq("user_id", user.id);
+
+    setSaving(false);
+
+    if (writeErr) {
+      setAvailable(!next); // Revert
+      setError(
+        hasWorkerRow
+          ? writeErr.message
+          : "Complete your worker profile first before setting availability.",
+      );
+      return;
+    }
+    setSavedAt(new Date());
+  }
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-10 md:px-8">
@@ -28,11 +95,17 @@ export default function WorkerHomePage() {
             <div>
               <p className="text-xs uppercase tracking-wide text-brand-100">Status</p>
               <p className="text-lg font-bold">{available ? "Available now" : "Offline"}</p>
+              {saving && <p className="text-[11px] text-brand-100/80">saving…</p>}
+              {savedAt && !saving && (
+                <p className="text-[11px] text-brand-100/80">saved · {savedAt.toLocaleTimeString()}</p>
+              )}
+              {error && <p className="mt-1 text-[11px] text-rose-200">{error}</p>}
             </div>
             <button
-              onClick={() => setAvailable((s) => !s)}
+              onClick={toggle}
+              disabled={saving}
               aria-pressed={available}
-              className={`relative h-10 w-20 rounded-full transition ${
+              className={`relative h-10 w-20 rounded-full transition disabled:opacity-70 ${
                 available ? "bg-brand-400" : "bg-gray-600"
               }`}
             >

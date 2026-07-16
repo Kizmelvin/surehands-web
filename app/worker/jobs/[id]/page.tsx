@@ -4,6 +4,7 @@ import Link from "next/link";
 import { notFound, useParams } from "next/navigation";
 import { useState } from "react";
 import { JOBS, formatNaira, timeAgo } from "@/lib/fixtures";
+import { BookingStatusTracker } from "@/components/booking-status-tracker";
 
 export default function WorkerJobDetailPage() {
   const params = useParams<{ id: string }>();
@@ -122,6 +123,10 @@ export default function WorkerJobDetailPage() {
         </div>
 
         <aside className="space-y-4">
+          {submitted && (
+            <BookingStatusTracker role="worker" initialStatus="accepted" />
+          )}
+
           <div className="card">
             <h2 className="text-sm font-semibold text-gray-900">Total client will see</h2>
             <dl className="mt-3 space-y-2 text-sm">

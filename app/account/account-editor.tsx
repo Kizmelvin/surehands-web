@@ -1,7 +1,7 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { PhotoUploader } from "@/components/photo-uploader";
 import { ENUGU_NEIGHBOURHOODS } from "@/lib/fixtures";
@@ -17,24 +17,55 @@ type Initial = {
   resident_city: string;
 };
 
+type Props = {
+  userId: string;
+  email: string;
+  initial: Initial;
+  /** False when /account loaded but no row existed in profiles (trigger never ran). */
+  profileExists: boolean;
+  /** True when the profile already has a full_name — locks the field. */
+  lockFullName: boolean;
+};
+
+const PENDING_AVATAR_KEY = "sure-hands:pending-avatar";
+const PENDING_AVATAR_NAME_KEY = "sure-hands:pending-avatar-name";
+
+async function dataUrlToFile(dataUrl: string, filename: string): Promise<File> {
+  const res = await fetch(dataUrl);
+  const blob = await res.blob();
+  return new File([blob], filename, { type: blob.type });
+}
+
 export function AccountEditor({
   userId,
   email,
   initial,
-}: {
-  userId: string;
-  email: string;
-  initial: Initial;
-}) {
+  profileExists,
+  lockFullName,
+}: Props) {
   const router = useRouter();
   const [fullName, setFullName] = useState(initial.full_name);
   const [phone, setPhone] = useState(initial.phone);
   const [residentCity, setResidentCity] = useState(initial.resident_city);
   const [operatingCity, setOperatingCity] = useState(initial.operating_city);
   const [photo, setPhoto] = useState<File | null>(null);
+  const [photoFromStash, setPhotoFromStash] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+
+  // Rehydrate a photo that was stashed during sign-up (when there was no session
+  // yet, so we couldn't upload to storage). We auto-upload it on first save.
+  useEffect(() => {
+    if (typeof window === "undefined" || initial.avatar_url) return;
+    const dataUrl = sessionStorage.getItem(PENDING_AVATAR_KEY);
+    const name = sessionStorage.getItem(PENDING_AVATAR_NAME_KEY) ?? "avatar.jpg";
+    if (!dataUrl) return;
+    dataUrlToFile(dataUrl, name).then((file) => {
+      setPhoto(file);
+      setPhotoFromStash(file);
+    });
+  }, [initial.avatar_url]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -44,6 +75,16 @@ export function AccountEditor({
 
     const supabase = createClient();
 
+    // Guard: must have a session to upload to a per-uid storage folder
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    if (!session) {
+      setError("Your session expired. Sign in again, then save.");
+      setSubmitting(false);
+      return;
+    }
+
     let nextAvatarUrl = initial.avatar_url;
     if (photo) {
       const ext = photo.name.split(".").pop()?.toLowerCase() ?? "jpg";
@@ -52,29 +93,57 @@ export function AccountEditor({
         .from("media")
         .upload(path, photo, { contentType: photo.type, upsert: true });
       if (uploadErr) {
-        setError(`Photo upload failed: ${uploadErr.message}`);
+        const friendly = /row-level security|policy/i.test(uploadErr.message)
+          ? "Couldn't upload photo — your sign-in might be stale. Try signing out and back in."
+          : `Photo upload failed: ${uploadErr.message}`;
+        setError(friendly);
         setSubmitting(false);
         return;
       }
-      const { data: publicUrl } = supabase.storage.from("media").getPublicUrl(path);
-      nextAvatarUrl = publicUrl.publicUrl;
+      const { data: pub } = supabase.storage.from("media").getPublicUrl(path);
+      nextAvatarUrl = pub.publicUrl;
     }
 
-    const { error: updateErr } = await supabase
-      .from("profiles")
-      .update({
-        full_name: fullName,
-        phone: phone || null,
-        avatar_url: nextAvatarUrl,
-        resident_city: residentCity || null,
-        operating_city: operatingCity || null,
-      })
-      .eq("id", userId);
+    // UPSERT so we recover gracefully when the trigger didn't run (legacy accounts)
+    const upsertBody: Record<string, unknown> = {
+      id: userId,
+      role: initial.role,
+      email,
+      phone: phone || null,
+      avatar_url: nextAvatarUrl,
+      resident_city: residentCity || null,
+      operating_city: operatingCity || null,
+    };
 
-    if (updateErr) {
-      setError(updateErr.message);
+    // Only write full_name if it isn't already locked (i.e. wasn't set yet)
+    if (!lockFullName && fullName.trim()) {
+      upsertBody.full_name = fullName.trim();
+    }
+
+    const { error: writeErr } = profileExists
+      ? await supabase
+          .from("profiles")
+          .update({
+            ...(lockFullName ? {} : { full_name: fullName.trim() || null }),
+            phone: phone || null,
+            avatar_url: nextAvatarUrl,
+            resident_city: residentCity || null,
+            operating_city: operatingCity || null,
+          })
+          .eq("id", userId)
+      : await supabase.from("profiles").upsert(upsertBody);
+
+    if (writeErr) {
+      setError(writeErr.message);
       setSubmitting(false);
       return;
+    }
+
+    // Clear the pending photo stash once it's been persisted
+    if (photoFromStash) {
+      sessionStorage.removeItem(PENDING_AVATAR_KEY);
+      sessionStorage.removeItem(PENDING_AVATAR_NAME_KEY);
+      setPhotoFromStash(null);
     }
 
     setSaved(true);
@@ -93,6 +162,11 @@ export function AccountEditor({
           initialName={fullName}
           onFileSelected={setPhoto}
         />
+        {photoFromStash && (
+          <p className="mt-2 text-xs text-brand-700">
+            Found the photo you picked at sign-up — it&apos;ll be saved when you hit &ldquo;Save changes&rdquo;.
+          </p>
+        )}
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
@@ -103,11 +177,17 @@ export function AccountEditor({
             value={fullName}
             onChange={(e) => setFullName(e.target.value)}
             required
+            disabled={lockFullName}
+            title={lockFullName ? "Contact support to change your name" : undefined}
           />
+          {lockFullName && (
+            <p className="mt-1 text-[11px] text-gray-500">Locked. Contact support to change.</p>
+          )}
         </div>
         <div>
           <label className="label">Email</label>
           <input className="input" value={email} disabled />
+          <p className="mt-1 text-[11px] text-gray-500">Locked.</p>
         </div>
         <div>
           <label className="label">Phone</label>
@@ -116,11 +196,13 @@ export function AccountEditor({
             className="input"
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
+            placeholder="+234 803 ..."
           />
         </div>
         <div>
           <label className="label">Role</label>
           <input className="input capitalize" value={initial.role} disabled />
+          <p className="mt-1 text-[11px] text-gray-500">Locked.</p>
         </div>
         <div>
           <label className="label">Resident neighbourhood</label>

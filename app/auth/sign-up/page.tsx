@@ -42,6 +42,7 @@ function SignUpInner() {
       email,
       password,
       options: {
+        // Read by the handle_new_user() trigger to populate public.profiles
         data: { full_name: fullName, role, phone },
       },
     });
@@ -52,48 +53,55 @@ function SignUpInner() {
       return;
     }
 
-    const userId = signUp.user.id;
-    let avatarUrl: string | null = null;
+    // If email-confirmation is OFF, Supabase returns a live session here and we
+    // can finish setup immediately (upload photo + redirect to /account).
+    // If it's ON (default), session is null and we send the user to /auth/check-email.
+    const hasSession = !!signUp.session;
 
-    if (photo) {
-      const ext = photo.name.split(".").pop()?.toLowerCase() ?? "jpg";
-      const path = `${userId}/avatar/${Date.now()}.${ext}`;
-      const { error: uploadErr } = await supabase.storage
-        .from("media")
-        .upload(path, photo, { contentType: photo.type, upsert: true });
+    if (hasSession) {
+      if (photo) {
+        const userId = signUp.user.id;
+        const ext = photo.name.split(".").pop()?.toLowerCase() ?? "jpg";
+        const path = `${userId}/avatar/${Date.now()}.${ext}`;
+        const { error: uploadErr } = await supabase.storage
+          .from("media")
+          .upload(path, photo, { contentType: photo.type, upsert: true });
 
-      if (uploadErr) {
-        // Non-fatal — the account exists, the user can re-upload from /account.
-        console.warn("Avatar upload failed:", uploadErr.message);
-      } else {
-        const { data: publicUrl } = supabase.storage.from("media").getPublicUrl(path);
-        avatarUrl = publicUrl.publicUrl;
+        if (!uploadErr) {
+          const { data: pub } = supabase.storage.from("media").getPublicUrl(path);
+          await supabase
+            .from("profiles")
+            .update({ avatar_url: pub.publicUrl })
+            .eq("id", userId);
+        }
       }
-    }
 
-    const { error: profileErr } = await supabase.from("profiles").upsert({
-      id: userId,
-      role,
-      full_name: fullName,
-      email,
-      phone: phone || null,
-      avatar_url: avatarUrl,
-    });
-
-    if (profileErr) {
-      // Likely a Supabase email-confirmation flow — the user_id exists in auth but profiles RLS may fail until confirmed.
-      // We surface a friendly message either way.
-      setError(
-        profileErr.message.includes("row-level security")
-          ? "Check your email to confirm your account, then sign in to finish your profile."
-          : profileErr.message,
-      );
-      setSubmitting(false);
+      router.push(next);
+      router.refresh();
       return;
     }
 
-    router.push(next);
-    router.refresh();
+    // Stash the photo so we can pick it up on /account after sign-in confirms.
+    // (We can't upload from the sign-up flow when there's no session — storage RLS
+    // requires auth.uid() == the path's first folder segment.)
+    if (photo) {
+      try {
+        const reader = new FileReader();
+        reader.onload = () => {
+          try {
+            sessionStorage.setItem("sure-hands:pending-avatar", String(reader.result));
+            sessionStorage.setItem("sure-hands:pending-avatar-name", photo.name);
+          } catch {
+            /* sessionStorage may be unavailable in private mode — skip silently */
+          }
+        };
+        reader.readAsDataURL(photo);
+      } catch {
+        /* ignore — photo will just need to be re-uploaded from /account */
+      }
+    }
+
+    router.push(`/auth/check-email?email=${encodeURIComponent(email)}`);
   }
 
   return (
