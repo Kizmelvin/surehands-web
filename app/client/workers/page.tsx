@@ -1,9 +1,10 @@
 "use client";
 
-import { Suspense, useMemo, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { CATEGORIES, ENUGU_NEIGHBOURHOODS, WORKERS } from "@/lib/fixtures";
+import { CATEGORIES, ENUGU_NEIGHBOURHOODS } from "@/lib/fixtures";
 import { WorkerCard } from "@/components/worker-card";
+import { DEFAULT_CLIENT_POSITION, searchWorkers, type SearchResult } from "@/lib/workers";
 
 export default function WorkersPage() {
   return (
@@ -22,28 +23,59 @@ function WorkersPageInner() {
   const [availableOnly, setAvailableOnly] = useState<boolean>(true);
   const [verifiedOnly, setVerifiedOnly] = useState<boolean>(true);
   const [neighbourhood, setNeighbourhood] = useState<string>("GRA");
+  const [result, setResult] = useState<SearchResult>({ workers: [], source: "fixture" });
+  const [loading, setLoading] = useState(true);
 
-  const filtered = useMemo(() => {
-    return WORKERS.filter((w) => {
-      if (category !== "All" && w.category !== category) return false;
-      if (w.distance_km > radius) return false;
-      if (availableOnly && !w.is_available) return false;
-      if (verifiedOnly && !w.nin_verified) return false;
-      return true;
-    }).sort((a, b) => a.distance_km - b.distance_km);
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    searchWorkers({
+      lat: DEFAULT_CLIENT_POSITION.lat,
+      lng: DEFAULT_CLIENT_POSITION.lng,
+      radiusKm: radius,
+      category,
+      onlyAvailable: availableOnly,
+      onlyVerified: verifiedOnly,
+    }).then((r) => {
+      if (cancelled) return;
+      setResult(r);
+      setLoading(false);
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [category, radius, availableOnly, verifiedOnly]);
+
+  const filtered = result.workers;
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-10 md:px-8">
       <header className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
-        <div>
-          <p className="text-sm font-medium text-brand-700">Find a worker</p>
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="text-sm font-medium text-brand-700">Find a worker</p>
+            <span
+              className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${
+                result.source === "live"
+                  ? "bg-brand-100 text-brand-700"
+                  : "bg-amber-100 text-amber-800"
+              }`}
+              title={result.source === "live" ? "Results from the live Supabase RPC." : "Migrations not applied yet — seed data."}
+            >
+              {result.source === "live" ? "Live data" : "Seed data"}
+            </span>
+          </div>
           <h1 className="text-3xl font-bold tracking-tight text-gray-900">
             Verified workers near {neighbourhood}
           </h1>
           <p className="mt-1 text-gray-600">
-            {filtered.length} match{filtered.length === 1 ? "" : "es"} within {radius} km · sorted by distance
+            {loading
+              ? "Searching…"
+              : `${filtered.length} match${filtered.length === 1 ? "" : "es"} within ${radius} km · sorted by distance`}
           </p>
+          {result.message && (
+            <p className="mt-1 text-xs text-amber-700">{result.message}</p>
+          )}
         </div>
       </header>
 
