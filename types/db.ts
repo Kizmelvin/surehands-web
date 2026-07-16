@@ -5,6 +5,53 @@ export type JobStatus = "open" | "closed" | "canceled";
 export type ProposalStatus = "submitted" | "accepted" | "rejected" | "withdrawn";
 export type VerificationStatus = "pending" | "approved" | "rejected";
 
+export type BookingStatus =
+  | "requested"
+  | "accepted"
+  | "en_route"
+  | "in_progress"
+  | "completed"
+  | "canceled";
+
+export const BOOKING_STATUS_ORDER: BookingStatus[] = [
+  "requested",
+  "accepted",
+  "en_route",
+  "in_progress",
+  "completed",
+];
+
+export type Booking = {
+  id: UUID;
+  job_id: UUID;
+  proposal_id: UUID;
+  client_user_id: UUID;
+  worker_user_id: UUID;
+  status: BookingStatus;
+  agreed_price: number;
+  scheduled_at: string | null;
+  accepted_at: string | null;
+  en_route_at: string | null;
+  in_progress_at: string | null;
+  completed_at: string | null;
+  canceled_at: string | null;
+  cancel_reason: string | null;
+  client_confirmed_complete: boolean;
+  worker_marked_complete: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+export type Review = {
+  id: UUID;
+  booking_id: UUID;
+  rater_user_id: UUID;
+  ratee_user_id: UUID;
+  stars: 1 | 2 | 3 | 4 | 5;
+  comment: string | null;
+  created_at: string;
+};
+
 export type ServiceCategory = {
   id: UUID;
   name: string;
