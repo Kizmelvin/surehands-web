@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { CATEGORIES, ENUGU_NEIGHBOURHOODS } from "@/lib/fixtures";
+import { MediaUploader, type PickedMedia } from "@/components/media-uploader";
 
 export default function PostJobPage() {
   const [title, setTitle] = useState("");
@@ -10,6 +11,7 @@ export default function PostJobPage() {
   const [neighbourhood, setNeighbourhood] = useState("GRA");
   const [budget, setBudget] = useState<number>(15000);
   const [urgency, setUrgency] = useState<"asap" | "today" | "this_week">("today");
+  const [media, setMedia] = useState<PickedMedia[]>([]);
   const [submitted, setSubmitted] = useState(false);
 
   if (submitted) {
@@ -69,6 +71,17 @@ export default function PostJobPage() {
               value={description}
               onChange={(e) => setDescription(e.target.value)}
             />
+          </div>
+
+          <div>
+            <label className="label">Photos or a short video (optional)</label>
+            <MediaUploader onChange={setMedia} />
+            {media.length > 0 && (
+              <p className="mt-1 text-xs text-brand-700">
+                {media.length} attachment{media.length === 1 ? "" : "s"} ready. Workers will see these when
+                deciding whether to quote.
+              </p>
+            )}
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
