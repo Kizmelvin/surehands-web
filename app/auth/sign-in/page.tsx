@@ -33,6 +33,11 @@ function SignInInner() {
     const { error: signInErr } = await supabase.auth.signInWithPassword({ email, password });
 
     if (signInErr) {
+      // Common Supabase error for unverified accounts — push them back to the explainer page
+      if (/email not confirmed|email_not_confirmed/i.test(signInErr.message)) {
+        router.push(`/auth/check-email?email=${encodeURIComponent(email)}`);
+        return;
+      }
       setError(signInErr.message);
       setSubmitting(false);
       return;

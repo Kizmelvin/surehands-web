@@ -24,7 +24,15 @@ export async function SiteHeader() {
     role = profile?.role ?? null;
   }
 
-  const dashboardHref = role === "worker" ? "/worker" : role === "client" ? "/client" : null;
+  const dashboardHref =
+    role === "worker"
+      ? "/worker"
+      : role === "client"
+        ? "/client"
+        : role === "admin"
+          ? "/admin"
+          : null;
+  const isAdmin = role === "admin";
 
   return (
     <header className="sticky top-0 z-30 border-b border-gray-200 bg-white/80 backdrop-blur">
@@ -64,16 +72,26 @@ export async function SiteHeader() {
         <div className="flex items-center gap-2">
           {user ? (
             <>
+              {isAdmin && (
+                <Link
+                  href="/admin"
+                  className="hidden rounded-full bg-amber-100 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-amber-800 sm:inline-flex"
+                >
+                  Admin
+                </Link>
+              )}
               {dashboardHref && (
                 <Link href={dashboardHref} className="btn-ghost hidden sm:inline-flex">
                   Dashboard
                 </Link>
               )}
-              <Link href="/account" className="flex items-center gap-2 rounded-full border border-gray-200 bg-white px-2 py-1 transition hover:border-brand-300 hover:bg-brand-50">
-                <Avatar url={avatarUrl} name={displayName} size="xs" />
-                <span className="hidden text-sm font-medium text-gray-800 sm:inline">
-                  {displayName?.split(" ")[0] ?? "Account"}
-                </span>
+              <Link
+                href="/account"
+                className="rounded-full ring-2 ring-transparent transition hover:ring-brand-300"
+                aria-label={displayName ? `${displayName} — your account` : "Your account"}
+                title={displayName ?? "Account"}
+              >
+                <Avatar url={avatarUrl} name={displayName} size="sm" />
               </Link>
               <form action="/auth/sign-out" method="POST" className="hidden sm:block">
                 <button type="submit" className="btn-ghost" aria-label="Sign out">
