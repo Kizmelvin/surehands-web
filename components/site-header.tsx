@@ -24,14 +24,11 @@ export async function SiteHeader() {
     role = profile?.role ?? null;
   }
 
+  // Dashboard link only for client / worker roles. Admins get a dedicated
+  // "Admin" pill instead — collapsing both into one button confused users who
+  // wanted to leave /admin.
   const dashboardHref =
-    role === "worker"
-      ? "/worker"
-      : role === "client"
-        ? "/client"
-        : role === "admin"
-          ? "/admin"
-          : null;
+    role === "worker" ? "/worker" : role === "client" ? "/client" : null;
   const isAdmin = role === "admin";
 
   return (

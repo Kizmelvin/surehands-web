@@ -15,6 +15,7 @@ type Initial = {
   role: Role;
   operating_city: string;
   resident_city: string;
+  operating_neighbourhoods: string[];
 };
 
 type Props = {
@@ -23,12 +24,15 @@ type Props = {
   initial: Initial;
   /** False when /account loaded but no row existed in profiles (trigger never ran). */
   profileExists: boolean;
+  /** False when this worker has no row in the `workers` table yet. */
+  workerRowExists: boolean;
   /** True when the profile already has a full_name — locks the field. */
   lockFullName: boolean;
 };
 
 const PENDING_AVATAR_KEY = "sure-hands:pending-avatar";
 const PENDING_AVATAR_NAME_KEY = "sure-hands:pending-avatar-name";
+const MAX_OPERATING = 3;
 
 async function dataUrlToFile(dataUrl: string, filename: string): Promise<File> {
   const res = await fetch(dataUrl);
@@ -41,18 +45,29 @@ export function AccountEditor({
   email,
   initial,
   profileExists,
+  workerRowExists,
   lockFullName,
 }: Props) {
   const router = useRouter();
   const [fullName, setFullName] = useState(initial.full_name);
   const [phone, setPhone] = useState(initial.phone);
   const [residentCity, setResidentCity] = useState(initial.resident_city);
-  const [operatingCity, setOperatingCity] = useState(initial.operating_city);
+  const [operatingNeighbourhoods, setOperatingNeighbourhoods] = useState<string[]>(
+    initial.operating_neighbourhoods,
+  );
   const [photo, setPhoto] = useState<File | null>(null);
   const [photoFromStash, setPhotoFromStash] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+
+  function toggleOperating(name: string) {
+    setOperatingNeighbourhoods((prev) => {
+      if (prev.includes(name)) return prev.filter((n) => n !== name);
+      if (prev.length >= MAX_OPERATING) return prev;
+      return [...prev, name];
+    });
+  }
 
   // Rehydrate a photo that was stashed during sign-up (when there was no session
   // yet, so we couldn't upload to storage). We auto-upload it on first save.
@@ -75,26 +90,30 @@ export function AccountEditor({
 
     const supabase = createClient();
 
-    // Guard: must have a session to upload to a per-uid storage folder
+    // Read the *client-side* JWT — this is what storage RLS's auth.uid() will see.
+    // Using the server-passed userId prop can mismatch if cookies/JWT are stale, which
+    // is exactly the bug we've been chasing.
     const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    if (!session) {
+      data: { user: authUser },
+      error: authErr,
+    } = await supabase.auth.getUser();
+    if (authErr || !authUser) {
       setError("Your session expired. Sign in again, then save.");
       setSubmitting(false);
       return;
     }
+    const authUid = authUser.id;
 
     let nextAvatarUrl = initial.avatar_url;
     if (photo) {
       const ext = photo.name.split(".").pop()?.toLowerCase() ?? "jpg";
-      const path = `${userId}/avatar/${Date.now()}.${ext}`;
+      const path = `${authUid}/avatar/${Date.now()}.${ext}`;
       const { error: uploadErr } = await supabase.storage
         .from("media")
         .upload(path, photo, { contentType: photo.type, upsert: true });
       if (uploadErr) {
         const friendly = /row-level security|policy/i.test(uploadErr.message)
-          ? "Couldn't upload photo — your sign-in might be stale. Try signing out and back in."
+          ? `Couldn't upload photo (storage RLS rejected the request). Client uid: ${authUid.slice(0, 8)}…, server prop uid: ${userId.slice(0, 8)}… — if these differ, sign out and back in.`
           : `Photo upload failed: ${uploadErr.message}`;
         setError(friendly);
         setSubmitting(false);
@@ -106,13 +125,15 @@ export function AccountEditor({
 
     // UPSERT so we recover gracefully when the trigger didn't run (legacy accounts)
     const upsertBody: Record<string, unknown> = {
-      id: userId,
+      id: authUid,
       role: initial.role,
       email,
       phone: phone || null,
       avatar_url: nextAvatarUrl,
       resident_city: residentCity || null,
-      operating_city: operatingCity || null,
+      // Keep the legacy operating_city populated with the first operating neighbourhood
+      // so existing mobile screens still work.
+      operating_city: operatingNeighbourhoods[0] ?? null,
     };
 
     // Only write full_name if it isn't already locked (i.e. wasn't set yet)
@@ -128,15 +149,30 @@ export function AccountEditor({
             phone: phone || null,
             avatar_url: nextAvatarUrl,
             resident_city: residentCity || null,
-            operating_city: operatingCity || null,
+            operating_city: operatingNeighbourhoods[0] ?? null,
           })
-          .eq("id", userId)
+          .eq("id", authUid)
       : await supabase.from("profiles").upsert(upsertBody);
 
     if (writeErr) {
       setError(writeErr.message);
       setSubmitting(false);
       return;
+    }
+
+    // Workers: also persist operating_neighbourhoods on the workers row.
+    // Skip cleanly if the workers row doesn't exist (client account or trigger
+    // hasn't run yet).
+    if (initial.role === "worker" && workerRowExists) {
+      const { error: workerErr } = await supabase
+        .from("workers")
+        .update({ operating_neighbourhoods: operatingNeighbourhoods })
+        .eq("user_id", authUid);
+      if (workerErr) {
+        setError(`Profile saved, but couldn't update operating areas: ${workerErr.message}`);
+        setSubmitting(false);
+        return;
+      }
     }
 
     // Clear the pending photo stash once it's been persisted
@@ -213,18 +249,51 @@ export function AccountEditor({
             ))}
           </select>
         </div>
-        {initial.role === "worker" && (
-          <div>
-            <label className="label">Operating neighbourhood</label>
-            <select className="input" value={operatingCity} onChange={(e) => setOperatingCity(e.target.value)}>
-              <option value="">Choose…</option>
-              {ENUGU_NEIGHBOURHOODS.map((n) => (
-                <option key={n}>{n}</option>
-              ))}
-            </select>
-          </div>
-        )}
       </div>
+
+      {initial.role === "worker" && (
+        <div>
+          <label className="label">
+            Operating neighbourhoods (pick 1–{MAX_OPERATING})
+          </label>
+          <div className="flex flex-wrap gap-2">
+            {ENUGU_NEIGHBOURHOODS.map((n) => {
+              const picked = operatingNeighbourhoods.includes(n);
+              const atCap = !picked && operatingNeighbourhoods.length >= MAX_OPERATING;
+              return (
+                <button
+                  key={n}
+                  type="button"
+                  onClick={() => toggleOperating(n)}
+                  disabled={atCap}
+                  className={`rounded-full border px-3 py-1 text-xs font-medium transition ${
+                    picked
+                      ? "border-brand-600 bg-brand-50 text-brand-700"
+                      : atCap
+                        ? "border-gray-200 bg-gray-50 text-gray-400"
+                        : "border-gray-300 bg-white text-gray-700 hover:border-brand-400"
+                  }`}
+                >
+                  {picked ? "✓ " : ""}
+                  {n}
+                </button>
+              );
+            })}
+          </div>
+          <p className="mt-1 text-xs text-gray-500">
+            {operatingNeighbourhoods.length === 0
+              ? "Pick up to 3 neighbourhoods you're willing to travel to for jobs."
+              : `${operatingNeighbourhoods.length} of ${MAX_OPERATING} selected.`}
+          </p>
+          {!workerRowExists && (
+            <p className="mt-2 rounded-xl border border-amber-200 bg-amber-50 p-2 text-xs text-amber-800">
+              Your worker profile hasn&apos;t been created yet (this can happen if you
+              signed up before migration 005 ran). Saving here won&apos;t persist these
+              areas until an admin fixes your worker row.
+            </p>
+          )}
+        </div>
+      )}
 
       {error && (
         <div className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">
