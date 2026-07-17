@@ -4,6 +4,23 @@
 
 ---
 
+## ✅ Shipped in `fix/auth-worker-onboarding` (2026-07-15)
+
+Bug fixes from real-user testing:
+
+- **Photo upload RLS failure** — root cause: we were using the server-passed `userId` for the storage path, but the browser JWT's `auth.uid()` could differ if the session cookie was stale. Fixed by reading the client-side `auth.getUser()` and using *that* uid for the upload path. Error messaging now shows both uids side-by-side so any future mismatch is diagnosable.
+- **"Existing email" sign-ups silently succeeding** — Supabase's default anti-enumeration behavior returns a fake success and sends no email. Now we detect the empty `identities` array and show a real error ("email already registered, try signing in").
+- **Admin's "Dashboard" button routing back to `/admin`** — collapsed the button for admins; the amber "Admin" pill is now the single admin CTA.
+- **Worker dashboard showing dummy Chibuzo data** — dashboard now loads the signed-in user's name/avatar, computes real weekly earnings + completed count from `bookings`, and pulls the weighted rating from `worker_review_aggregate`. Shows honest zeros for new accounts.
+
+New features:
+
+- **OTP-code signup verification** at `/auth/verify-otp` (6-digit code instead of a magic link). Sign-up now redirects here. Requires updating the Supabase "Confirm signup" email template to include `{{ .Token }}` (Supabase Dashboard → Authentication → Email Templates).
+- **Forgot password / reset password** flow at `/auth/forgot-password` and `/auth/reset-password`. Wired into the sign-in page.
+- **Worker category at signup** — required dropdown when role = "Worker".
+- **Worker multi-operating neighbourhoods** — pick 1–3 areas at signup (also editable from `/account`). Stored in new `workers.operating_neighbourhoods text[]` column (migration 005).
+- **Trigger creates the workers row at signup** — no more "your worker profile is pending" limbo for new signups. Migration 005 rewrites `handle_new_user()` to insert into `workers` with role, category, and operating areas from metadata.
+
 ## ✅ Shipped in `feat/admin-media-toggle` (2026-06-29)
 
 - **Admin console at `/admin`** — layout with sidebar nav, gated by `profiles.role = 'admin'`. Pages: Overview (stats), KYC queue (approve/reject verification, batches worker + profile updates), Workers (visibility / availability toggles per row), Bookings (recent + status table). `requireAdmin()` helper (`lib/is-admin.ts`) does the role check. Header now shows an amber "Admin" pill when the signed-in user is an admin.

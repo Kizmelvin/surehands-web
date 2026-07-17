@@ -1,16 +1,44 @@
 import Link from "next/link";
 import { WorkerCard } from "@/components/worker-card";
 import { CATEGORIES, WORKERS } from "@/lib/fixtures";
+import { createClient } from "@/lib/supabase/server";
 
-export default function ClientHomePage() {
+export const dynamic = "force-dynamic";
+
+async function loadFirstName(): Promise<string | null> {
+  const supabase = createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return null;
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("full_name")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  const source =
+    profile?.full_name ??
+    (user.user_metadata?.full_name as string | undefined) ??
+    user.email ??
+    null;
+  if (!source) return null;
+  return source.trim().split(/\s+/)[0] ?? null;
+}
+
+export default async function ClientHomePage() {
+  const firstName = await loadFirstName();
   const available = WORKERS.filter((w) => w.is_available).slice(0, 4);
   return (
     <div className="mx-auto max-w-7xl px-4 py-10 md:px-8">
       <div className="rounded-2xl bg-gradient-to-br from-brand-600 to-brand-800 p-6 text-white shadow-soft sm:rounded-3xl sm:p-8">
         <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
-          <div className="min-w-0">
-            <p className="text-brand-100">Client portal</p>
-             <h1 className="mt-2 break-words text-2xl font-bold leading-tight sm:text-3xl md:text-4xl">What do you need fixed today?</h1>
+          <div>
+            <p className="text-brand-100">
+              {firstName ? `Hi, ${firstName} 👋` : "Client portal"}
+            </p>
+            <h1 className="mt-2 text-2xl font-bold sm:text-3xl md:text-4xl">What do you need fixed today?</h1>
             <p className="mt-2 max-w-xl text-sm text-brand-100 sm:text-base">
               Post a job or browse verified workers near you. Average response time in Enugu: under 12 minutes.
             </p>

@@ -21,6 +21,13 @@ export default async function AccountPage() {
     .eq("id", user.id)
     .maybeSingle();
 
+  // Pull worker-only extras (safe: query returns null if user isn't a worker).
+  const { data: workerRow } = await supabase
+    .from("workers")
+    .select("category_id, operating_neighbourhoods")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
   // Best-effort fallback for the legacy edge case where the trigger hasn't run
   // (e.g. account was created before migration 003 was applied). The trigger
   // is now the canonical path — this is just defensive.
@@ -74,8 +81,10 @@ export default async function AccountPage() {
             role: role as "client" | "worker",
             operating_city: profile?.operating_city ?? "",
             resident_city: profile?.resident_city ?? "",
+            operating_neighbourhoods: (workerRow?.operating_neighbourhoods ?? []) as string[],
           }}
           profileExists={!!profile}
+          workerRowExists={!!workerRow}
           // Lock full_name only once it's been set in the DB — the trigger usually sets it,
           // but if it's missing (legacy account), let the user enter it once.
           lockFullName={!!profile?.full_name}
