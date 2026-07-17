@@ -36,13 +36,15 @@ export default function HomePage() {
             </div>
           </div>
 
-          <div className="relative">
-            <div className="absolute -left-6 -top-6 h-32 w-32 rounded-full bg-brand-100 blur-2xl" />
-            <div className="absolute -right-6 -bottom-6 h-40 w-40 rounded-full bg-accent-orange/20 blur-3xl" />
-            <div className="relative rounded-3xl border border-gray-200 bg-white p-5 shadow-soft">
-              <div className="mb-4 flex items-center justify-between">
-                <p className="text-sm font-semibold text-gray-900">Workers near GRA, Enugu</p>
-                <span className="chip">5 km radius</span>
+          <div className="relative isolate min-w-0 overflow-hidden rounded-3xl">
+            <div className="pointer-events-none absolute -left-6 -top-6 h-32 w-32 rounded-full bg-brand-100 blur-2xl" />
+            <div className="pointer-events-none absolute -right-6 -bottom-6 h-40 w-40 rounded-full bg-accent-orange/20 blur-3xl" />
+            <div className="relative rounded-3xl border border-gray-200 bg-white p-4 shadow-soft sm:p-5">
+              <div className="mb-4 flex items-center justify-between gap-2">
+                <p className="min-w-0 truncate text-sm font-semibold text-gray-900">
+                  Workers near GRA, Enugu
+                </p>
+                <span className="chip shrink-0 whitespace-nowrap">5 km radius</span>
               </div>
               <div className="space-y-3">
                 {WORKERS.slice(0, 3).map((w) => (

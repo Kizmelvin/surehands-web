@@ -158,6 +158,68 @@ export default function WorkerHomePage() {
   const greeting = greetingFor(new Date().getHours());
   const displayName = me?.first_name ?? "there";
 
+  // Load the current availability from the workers row (if it exists).
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      const supabase = createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data, error: loadErr } = await supabase
+        .from("workers")
+        .select("is_available")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (cancelled) return;
+      if (loadErr) return; // Silent — page still works with local state
+      if (data) {
+        setHasWorkerRow(true);
+        setAvailable(!!data.is_available);
+      }
+    }
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  async function toggle() {
+    setError(null);
+    const next = !available;
+    setAvailable(next); // Optimistic
+    setSaving(true);
+
+    const supabase = createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      setSaving(false);
+      return; // Not signed in — local state only
+    }
+
+    const { error: writeErr } = await supabase
+      .from("workers")
+      .update({ is_available: next })
+      .eq("user_id", user.id);
+
+    setSaving(false);
+
+    if (writeErr) {
+      setAvailable(!next); // Revert
+      setError(
+        hasWorkerRow
+          ? writeErr.message
+          : "Complete your worker profile first before setting availability.",
+      );
+      return;
+    }
+    setSavedAt(new Date());
+  }
+
   return (
     <div className="mx-auto max-w-7xl px-4 py-10 md:px-8">
       <div className="rounded-2xl bg-gradient-to-br from-brand-700 to-brand-900 p-6 text-white shadow-soft sm:rounded-3xl sm:p-8">
