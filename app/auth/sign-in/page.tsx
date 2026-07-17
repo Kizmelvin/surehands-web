@@ -78,15 +78,25 @@ function SignInInner() {
           />
         </div>
 
-        <PasswordInput
-          id="password"
-          label="Password"
-          value={password}
-          onChange={setPassword}
-          required
-          placeholder="••••••••"
-          autoComplete="current-password"
-        />
+        <div>
+          <PasswordInput
+            id="password"
+            label="Password"
+            value={password}
+            onChange={setPassword}
+            required
+            placeholder="••••••••"
+            autoComplete="current-password"
+          />
+          <div className="mt-2 text-right">
+            <Link
+              href="/auth/forgot-password"
+              className="text-xs font-medium text-brand-700 hover:underline"
+            >
+              Forgot password?
+            </Link>
+          </div>
+        </div>
 
         {error && (
           <div className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">
