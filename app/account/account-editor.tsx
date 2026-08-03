@@ -112,8 +112,8 @@ export function AccountEditor({
         .from("media")
         .upload(path, photo, { contentType: photo.type, upsert: true });
       if (uploadErr) {
-        const friendly = /row-level security|policy/i.test(uploadErr.message)
-          ? `Couldn't upload photo (storage RLS rejected the request). Client uid: ${authUid.slice(0, 8)}…, server prop uid: ${userId.slice(0, 8)}… — if these differ, sign out and back in.`
+        const friendly = /row-level security|policy|bucket/i.test(uploadErr.message)
+          ? "Couldn't upload photo — the storage bucket policies aren't installed on this Supabase project. Ask an admin to run migrations/006_nin_storage_and_admin_rls.sql."
           : `Photo upload failed: ${uploadErr.message}`;
         setError(friendly);
         setSubmitting(false);

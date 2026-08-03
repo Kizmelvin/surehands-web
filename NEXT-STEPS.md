@@ -4,6 +4,28 @@
 
 ---
 
+## ✅ Shipped in `fix/nin-storage-rls-admin` (2026-08-04)
+
+Bug fixes:
+
+- **Photo upload keeps failing with RLS reject** — real cause: the `media` storage bucket's INSERT/UPDATE policies were never installed on this Supabase project (they live in the mobile app's `supabase_rls.sql` which was probably never applied). Migration 006 creates the bucket idempotently and installs the four policies (public read, upload own, update own, delete own).
+- **Admin console shows "No workers yet" even when workers exist** — root cause: RLS on `workers` (and `bookings`, `jobs`, `profiles`) only allows a user to read their own row. Migration 006 adds an `is_admin()` helper (`SECURITY DEFINER` to avoid RLS recursion) and admin-scope read policies on all four tables.
+
+Password reset now uses an OTP code (matches sign-up verification pattern):
+
+- `/auth/forgot-password` sends the email via `resetPasswordForEmail` and redirects to `/auth/verify-reset?email=X` (was showing an inline "check your email" card).
+- New `/auth/verify-reset` page — 6-digit code input, resend button, fallback link back to `/auth/reset-password` for users who received the legacy magic link. Calls `verifyOtp({ type: 'recovery' })`.
+- Requires updating the Supabase **Reset Password** email template to include `{{ .Token }}` (Supabase Dashboard → Authentication → Email Templates).
+
+New feature — NIN verification:
+
+- **New `profiles.nin_submitted`, `nin_submitted_at`, `nin_rejected_reason` columns** (with a `CHECK` that the NIN is exactly 11 digits).
+- **`/account` gets a NIN card** (`<NinVerify />`) — 4 states: unsubmitted, pending, approved, rejected. Rejected shows the admin's reason and lets the user re-submit.
+- **`/admin/kyc` overhauled** — queue is now "NINs awaiting review" (was "workers with `verification_status = 'pending'`"). Each row shows the submitted NIN in monospace, an Approve button (also flips the workers row to approved+visible when applicable), and a Reject flow that requires a reason.
+- Approving/rejecting a NIN also updates the worker verification state so admins don't have to touch two places.
+
+> Explicitly deferred: no external NIN service is wired. Admins must verify each NIN through their own process before hitting Approve. See `migrations/006_nin_storage_and_admin_rls.sql` for the schema shape.
+
 ## ✅ Shipped in `fix/auth-worker-onboarding` (2026-07-15)
 
 Bug fixes from real-user testing:
