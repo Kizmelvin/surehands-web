@@ -11,6 +11,7 @@ Run them in numeric order — each is `begin; ... commit;` wrapped and idempoten
 | `003_profiles_trigger.sql` | Trigger on `auth.users` INSERT that auto-creates the matching `public.profiles` row from sign-up metadata. **Without this the web sign-up flow silently drops full_name + phone + role.** | Yes |
 | `004_job_media.sql` | Adds `jobs.media_urls text[]` so clients can attach photos/videos to a posted job. | Yes |
 | `005_worker_signup_fields.sql` | Adds `workers.operating_neighbourhoods text[]` and upgrades `handle_new_user()` to also create the workers row (with category + operating areas) at signup. | Yes |
+| `006_nin_storage_and_admin_rls.sql` | Ensures the `media` storage bucket + policies exist (fixes silent RLS reject on avatar upload); adds `profiles.nin_submitted / nin_submitted_at / nin_rejected_reason`; adds `is_admin()` helper + admin-scope RLS on `profiles / workers / bookings / jobs` so `/admin/*` pages can see all rows. | Yes |
 
 After running, in your app code you can call:
 
