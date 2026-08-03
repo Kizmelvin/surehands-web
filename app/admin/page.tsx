@@ -10,7 +10,13 @@ async function loadStats(): Promise<Stat[]> {
 
   const [workers, pendingKyc, jobs, bookings, reviews] = await Promise.all([
     supabase.from("workers").select("*", { count: "exact", head: true }),
-    supabase.from("workers").select("*", { count: "exact", head: true }).eq("verification_status", "pending"),
+    // NIN awaiting review — the primary KYC signal
+    supabase
+      .from("profiles")
+      .select("*", { count: "exact", head: true })
+      .not("nin_submitted", "is", null)
+      .eq("nin_verified", false)
+      .is("nin_rejected_reason", null),
     supabase.from("jobs").select("*", { count: "exact", head: true }),
     supabase.from("bookings").select("*", { count: "exact", head: true }),
     supabase.from("reviews").select("*", { count: "exact", head: true }),
@@ -18,7 +24,7 @@ async function loadStats(): Promise<Stat[]> {
 
   return [
     { label: "Workers", value: fmt(workers.count), href: "/admin/workers" },
-    { label: "Pending KYC", value: fmt(pendingKyc.count), hint: "Click to review", href: "/admin/kyc" },
+    { label: "Pending KYC", value: fmt(pendingKyc.count), hint: "NINs awaiting review", href: "/admin/kyc" },
     { label: "Jobs posted", value: fmt(jobs.count) },
     { label: "Bookings", value: fmt(bookings.count), href: "/admin/bookings" },
     { label: "Reviews", value: fmt(reviews.count) },

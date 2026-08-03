@@ -3,6 +3,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { Avatar } from "@/components/avatar";
 import { AccountEditor } from "./account-editor";
+import { NinVerify } from "@/components/nin-verify";
 
 export const dynamic = "force-dynamic";
 
@@ -17,7 +18,7 @@ export default async function AccountPage() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("id, role, full_name, email, phone, avatar_url, nin_verified, operating_city, resident_city")
+    .select("id, role, full_name, email, phone, avatar_url, nin_verified, nin_submitted, nin_submitted_at, nin_rejected_reason, operating_city, resident_city")
     .eq("id", user.id)
     .maybeSingle();
 
@@ -71,7 +72,8 @@ export default async function AccountPage() {
       )}
 
       <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_320px]">
-        <AccountEditor
+        <div className="space-y-6">
+          <AccountEditor
           userId={user.id}
           email={user.email ?? ""}
           initial={{
@@ -89,6 +91,15 @@ export default async function AccountPage() {
           // but if it's missing (legacy account), let the user enter it once.
           lockFullName={!!profile?.full_name}
         />
+
+          <NinVerify
+            userId={user.id}
+            initialNin={(profile as { nin_submitted?: string | null } | null)?.nin_submitted ?? null}
+            initialSubmittedAt={(profile as { nin_submitted_at?: string | null } | null)?.nin_submitted_at ?? null}
+            initialVerified={!!profile?.nin_verified}
+            initialRejectedReason={(profile as { nin_rejected_reason?: string | null } | null)?.nin_rejected_reason ?? null}
+          />
+        </div>
 
         <aside className="space-y-4">
           <div className="card text-center">
