@@ -4,6 +4,17 @@
 
 ---
 
+## ✅ Shipped in `feat/skill-video-verification` (2026-08-04)
+
+Skill video verification — mirrors the NIN pattern end-to-end so admins moderate video and NIN independently:
+
+- **New `<SkillVideoVerify />` card on `/account`** (worker-only). Same 4 states as NinVerify: Not submitted / Pending / Approved / Rejected. Uploads to `media/<uid>/skill_video/*` with client-side type/size/duration checks (video file, ≤ 25 MB, ≤ 20s), inline video preview before submit, resubmit after rejection.
+- **`/admin/kyc` split into two queues** — "NIN queue" (unchanged) and "Skill video queue" (new). Each row plays the video inline, with the same Approve / Reject-with-reason flow as NIN rows.
+- **Admin overview `Pending KYC` stat** now sums both queues and shows a per-queue breakdown in the hint.
+- **Migration 007** adds `workers.skill_video_submitted_at`, `skill_video_verified`, `skill_video_rejected_reason`, plus a `BEFORE INSERT/UPDATE` trigger that auto-syncs `has_skill_video` with `skill_video_url` (no more code paths that forget to update both).
+
+Docs: `migrations/README.md` updated with the 007 entry.
+
 ## ✅ Shipped in `fix/nin-storage-rls-admin` (2026-08-04)
 
 Bug fixes:

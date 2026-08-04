@@ -8,23 +8,37 @@ type Stat = { label: string; value: string; hint?: string; href?: string };
 async function loadStats(): Promise<Stat[]> {
   const supabase = createClient();
 
-  const [workers, pendingKyc, jobs, bookings, reviews] = await Promise.all([
+  const [workers, pendingNin, pendingVideos, jobs, bookings, reviews] = await Promise.all([
     supabase.from("workers").select("*", { count: "exact", head: true }),
-    // NIN awaiting review — the primary KYC signal
+    // NIN awaiting review
     supabase
       .from("profiles")
       .select("*", { count: "exact", head: true })
       .not("nin_submitted", "is", null)
       .eq("nin_verified", false)
       .is("nin_rejected_reason", null),
+    // Skill videos awaiting review
+    supabase
+      .from("workers")
+      .select("*", { count: "exact", head: true })
+      .not("skill_video_url", "is", null)
+      .eq("skill_video_verified", false)
+      .is("skill_video_rejected_reason", null),
     supabase.from("jobs").select("*", { count: "exact", head: true }),
     supabase.from("bookings").select("*", { count: "exact", head: true }),
     supabase.from("reviews").select("*", { count: "exact", head: true }),
   ]);
 
+  const totalPending = (pendingNin.count ?? 0) + (pendingVideos.count ?? 0);
+
   return [
     { label: "Workers", value: fmt(workers.count), href: "/admin/workers" },
-    { label: "Pending KYC", value: fmt(pendingKyc.count), hint: "NINs awaiting review", href: "/admin/kyc" },
+    {
+      label: "Pending KYC",
+      value: fmt(totalPending),
+      hint: `${fmt(pendingNin.count)} NIN · ${fmt(pendingVideos.count)} video`,
+      href: "/admin/kyc",
+    },
     { label: "Jobs posted", value: fmt(jobs.count) },
     { label: "Bookings", value: fmt(bookings.count), href: "/admin/bookings" },
     { label: "Reviews", value: fmt(reviews.count) },
