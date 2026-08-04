@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { Avatar } from "@/components/avatar";
 import { AccountEditor } from "./account-editor";
 import { NinVerify } from "@/components/nin-verify";
+import { SkillVideoVerify } from "@/components/skill-video-verify";
 
 export const dynamic = "force-dynamic";
 
@@ -25,7 +26,9 @@ export default async function AccountPage() {
   // Pull worker-only extras (safe: query returns null if user isn't a worker).
   const { data: workerRow } = await supabase
     .from("workers")
-    .select("category_id, operating_neighbourhoods")
+    .select(
+      "category_id, operating_neighbourhoods, skill_video_url, skill_video_submitted_at, skill_video_verified, skill_video_rejected_reason",
+    )
     .eq("user_id", user.id)
     .maybeSingle();
 
@@ -99,6 +102,26 @@ export default async function AccountPage() {
             initialVerified={!!profile?.nin_verified}
             initialRejectedReason={(profile as { nin_rejected_reason?: string | null } | null)?.nin_rejected_reason ?? null}
           />
+
+          {role === "worker" && workerRow && (
+            <SkillVideoVerify
+              userId={user.id}
+              initialUrl={
+                (workerRow as { skill_video_url?: string | null }).skill_video_url ?? null
+              }
+              initialSubmittedAt={
+                (workerRow as { skill_video_submitted_at?: string | null })
+                  .skill_video_submitted_at ?? null
+              }
+              initialVerified={
+                !!(workerRow as { skill_video_verified?: boolean }).skill_video_verified
+              }
+              initialRejectedReason={
+                (workerRow as { skill_video_rejected_reason?: string | null })
+                  .skill_video_rejected_reason ?? null
+              }
+            />
+          )}
         </div>
 
         <aside className="space-y-4">
