@@ -12,6 +12,7 @@ Run them in numeric order — each is `begin; ... commit;` wrapped and idempoten
 | `004_job_media.sql` | Adds `jobs.media_urls text[]` so clients can attach photos/videos to a posted job. | Yes |
 | `005_worker_signup_fields.sql` | Adds `workers.operating_neighbourhoods text[]` and upgrades `handle_new_user()` to also create the workers row (with category + operating areas) at signup. | Yes |
 | `006_nin_storage_and_admin_rls.sql` | Ensures the `media` storage bucket + policies exist (fixes silent RLS reject on avatar upload); adds `profiles.nin_submitted / nin_submitted_at / nin_rejected_reason`; adds `is_admin()` helper + admin-scope RLS on `profiles / workers / bookings / jobs` so `/admin/*` pages can see all rows. | Yes |
+| `007_skill_video_verification.sql` | Adds `workers.skill_video_submitted_at / skill_video_verified / skill_video_rejected_reason` (mirrors the NIN lifecycle) plus a `BEFORE INSERT/UPDATE` trigger that keeps `has_skill_video` in sync with `skill_video_url`. | Yes |
 
 After running, in your app code you can call:
 
